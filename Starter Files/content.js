@@ -159,6 +159,7 @@ function handleButtonClick() {
 
   // Create content area
   chatContent = document.createElement("div");
+  chatContent.id = "chat-messages";
   chatContent.style.flex = "1";
   chatContent.style.padding = "10px";
   chatContent.style.overflowY = "auto";
@@ -167,7 +168,8 @@ function handleButtonClick() {
   chatContent.style.gap = "10px";
 
   // Create message input field and send button
-  const messageInput = document.createElement("input");
+const messageInput = document.createElement("input");
+messageInput.id = "ai-chat-input";
 messageInput.type = "text";
 messageInput.placeholder = "Type your message...";
 messageInput.style.padding = "10px 15px";
@@ -283,41 +285,46 @@ function closeOnClickOutside(e) {
   }
 }
 
-function sendMessage() {
-  const messageInput = document.querySelector('input[type="text"]');
-  const message = messageInput.value.trim();
+async function sendMessage() {
+    const chatinput = document.getElementById("ai-chat-input");
+    const chatMessages = document.getElementById("chat-messages");
 
-  if (message) {
-    const senderMessage = document.createElement("div");
-    senderMessage.style.maxWidth = "100%";
-    senderMessage.style.fontSize = "15px";
-    senderMessage.style.backgroundColor = "#DDF6FF";
-    senderMessage.style.color = "black";
-    senderMessage.style.padding = "4px 10px";
-    senderMessage.style.borderRadius = "6px";
-    senderMessage.style.alignSelf = "flex-end";
-    senderMessage.style.wordWrap = "break-word";
-    senderMessage.innerText = message;
-    chatContent.appendChild(senderMessage);
+    const userMessage = chatinput.value.trim();
+    if(!userMessage) return;
 
-    const receiverMessage = document.createElement("div");
-    receiverMessage.style.maxWidth = "100%";
-    receiverMessage.style.fontSize = "15px";
-    receiverMessage.style.backgroundColor = "#f1f0f0";
-    receiverMessage.style.color = "#333";
-    receiverMessage.style.padding = "4px 10px";
-    receiverMessage.style.borderRadius = "6px";
-    receiverMessage.style.alignSelf = "flex-start";
-    receiverMessage.style.wordWrap = "break-word";
-    receiverMessage.innerText = "Thanks for your message!";
-    setTimeout(() => {
-      chatContent.appendChild(receiverMessage);
-      chatContent.scrollTop = chatContent.scrollHeight;
-    }, 1000);
+    const userMessageElement = document.createElement("div");
+    userMessageElement.style.cssText = `
+        max-width: 100%;
+        font-size: 15px;
+        background-color: #DDF6FF;
+        color: black;
+        padding: 4px 10px;
+        border-radius: 6px;
+        align-self: flex-end;
+        word-wrap: break-word;
+    `;
+    userMessageElement.innerText = userMessage;
+    chatMessages.appendChild(userMessageElement);
 
-    messageInput.value = "";
-    chatContent.scrollTop = chatContent.scrollHeight;
-  }
+    chatinput.value = "";
+
+    const botreply = await sendMessageToAPI(userMessage);
+
+    const botMessageElement = document.createElement("div");
+    botMessageElement.style.cssText = `
+      max-width: 100%;
+      font-size: 15px;
+      background-color: #f1f0f0;
+      color: #333;
+      padding: 4px 10px;
+      border-radius: 6px;
+      align-self: flex-start;
+      word-wrap: break-word;
+    `;
+    
+
+    botMessageElement.innerText = botreply;
+    chatMessages.appendChild(botMessageElement);
 }
 
 function makeResizable(element) {
@@ -369,7 +376,50 @@ function makeResizable(element) {
   }
 }
 
-
   const codingDescContainer = document.getElementsByClassName(codingDescContainerClass)[0];
   codingDescContainer.insertAdjacentElement("beforeend", aiHelpButton);
 };
+
+
+async function sendMessageToAPI(userMessage) {
+  const apiKey = "AIzaSyBtyfsVefSR-TtRGvPabICw5elXSfFxJBw";
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
+  const requestData = {
+    contents: [
+      {
+        parts: [
+          { text: userMessage }
+        ]
+      }
+    ]
+  };
+
+  try {
+    // Make the API call
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    // Parse the JSON response
+    const data = await response.json();
+
+    // Extract the AI's response message
+    if (data.candidates && data.candidates.length > 0) {
+      const aiResponse = data.candidates[0].content.parts[0].text;
+      console.log(aiResponse);  
+      return aiResponse;
+    } else {
+      throw new Error("No response from AI");
+    }
+  } catch (error) {
+    console.error("Error calling AI API:", error);
+    return "An error occurred while communicating with the AI.";
+  }
+}
+
+
