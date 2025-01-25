@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "AZ Help Bot",
+  "version": "0.1",
+  "author": "Nilesh Yadav",
+  "description": "A Chrome extension that helps you solve you with Coding related Stuff",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://maang.in/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources" : [
+    {
+      "resources": [
+        "assets/AIhelp.png",
+        "assets/bot.png"
+      ],
+      "matches" : ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/bot.png",
+      "24": "assets/bot.png",
+      "32": "assets/bot.png"
+    },
+    "default_popup": "index.html",
+    "default_title": "AZ Help Bot"
+  }
+}
