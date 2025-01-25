@@ -1,5 +1,5 @@
 // const aihelpimgURL = chrome.runtime.getURL("assets/AIhelp.png");
-// hii
+// hellooo
 const codingDescContainerClass = "coding_nav_bg__HRkIn";
 
 let lastPageVisited = "";
