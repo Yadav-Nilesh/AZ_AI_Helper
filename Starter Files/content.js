@@ -121,27 +121,30 @@ function handleButtonClick() {
     return;
   }
 
+
+
   chatPopup = document.createElement("div");
-  chatPopup.id = "ai-chat-container"; // Updated ID
-  chatPopup.style.position = "fixed";
-  chatPopup.style.bottom = "20px";
-  chatPopup.style.right = "20px";
-  chatPopup.style.width = "350px";
-  chatPopup.style.height = "450px";
-  chatPopup.style.backgroundColor = "#fff";
-  chatPopup.style.border = "1px solid #ccc";
-  chatPopup.style.borderRadius = "10px";
-  chatPopup.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
-  chatPopup.style.zIndex = "1000";
-  chatPopup.style.overflow = "hidden";
-  chatPopup.style.display = "flex";
-  chatPopup.style.flexDirection = "column";
-  chatPopup.style.transform = "scale(0)";
-  chatPopup.style.transition = "transform 0.3s ease-in-out";
+chatPopup.id = "ai-chat-container"; // Updated ID
+chatPopup.style.position = "fixed";
+chatPopup.style.bottom = "20px";
+chatPopup.style.right = "20px";
+chatPopup.style.width = "350px";
+chatPopup.style.height = "450px";
+chatPopup.style.backgroundColor = "#fff";
+chatPopup.style.border = "1px solid #ccc";
+chatPopup.style.borderRadius = "10px";
+chatPopup.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+chatPopup.style.zIndex = "1000";
+chatPopup.style.overflow = "hidden";
+chatPopup.style.display = "flex";
+chatPopup.style.flexDirection = "column";
+chatPopup.style.transform = "scale(0)";
+chatPopup.style.transition = "transform 0.3s ease-in-out";
+
 
   // Create header with close button
   const header = document.createElement("div");
-  header.style.backgroundColor = "#DDF6FF";
+  header.style.backgroundColor = "#fff";
   header.style.color = "black";
   header.style.padding = "10px";
   header.style.textAlign = "center";
@@ -157,14 +160,20 @@ function handleButtonClick() {
   closeButton.addEventListener("click", closeChatPopup);
   header.appendChild(closeButton);
 
+  
+
+
   // Create content area
   chatContent = document.createElement("div");
+  chatContent.id = "chat-messages";
   chatContent.style.flex = "1";
   chatContent.style.padding = "10px";
   chatContent.style.overflowY = "auto";
   chatContent.style.display = "flex";
   chatContent.style.flexDirection = "column";
   chatContent.style.gap = "10px";
+  chatContent.style.backgroundColor = "#ffffff";  // Fallback color
+  chatContent.style.backgroundImage = "linear-gradient(45deg, #ffffff 41%, #d1e4f1 100%)";
 
   // Create message input field and send button
   const messageInput = document.createElement("input");
@@ -195,7 +204,7 @@ sendButton.alt = "Send";
 sendButton.style.width = "20px"; // Adjust size as needed
 sendButton.style.height = "20px";
 sendButton.style.cursor = "pointer";
-sendButton.style.margin = "10px";
+sendButton.style.marginTop = "20px";
 sendButton.style.borderRadius = "5px";
 sendButton.style.backgroundColor = "transparent"; // Optional background color
 sendButton.style.border = "none";
