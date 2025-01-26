@@ -1,5 +1,114 @@
 // const aihelpimgURL = chrome.runtime.getURL("assets/AIhelp.png");
 // hellooo
+
+// Dynamically inject Highlight.js CSS for Solarized Dark theme
+const highlightCss = document.createElement("link");
+highlightCss.rel = "stylesheet";
+highlightCss.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/solarized-dark.min.css"; // Solarized Dark theme
+document.head.appendChild(highlightCss);
+
+// Dynamically inject Highlight.js JavaScript
+const highlightJs = document.createElement("script");
+highlightJs.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js";
+highlightJs.defer = true;
+highlightJs.onload = () => {
+  console.log("Highlight.js loaded");
+  // Apply syntax highlighting after the library is loaded
+  highlightAllCodeBlocks();
+};
+
+// Append the script to the document
+document.head.appendChild(highlightJs);
+
+// Function to highlight all code blocks in the chat
+function highlightAllCodeBlocks() {
+  const codeBlocks = document.querySelectorAll('pre code');
+  codeBlocks.forEach((block) => {
+    hljs.highlightElement(block);
+  });
+}
+
+// Function to send the message and format the bot's response
+async function sendMessage() {
+  const chatInput = document.getElementById("ai-chat-input");
+  const chatMessages = document.getElementById("chat-messages");
+
+  const userMessage = chatInput.value.trim();
+  if (!userMessage) return;
+
+  // Create user message element
+  const userMessageElement = document.createElement("div");
+  userMessageElement.style.cssText = `
+        max-width: 100%;
+        font-size: 15px;
+        background-color: #DDF6FF;
+        color: black;
+        padding: 4px 10px;
+        border-radius: 6px;
+        align-self: flex-end;
+        word-wrap: break-word;
+    `;
+  userMessageElement.innerText = userMessage;
+  chatMessages.appendChild(userMessageElement);
+
+  chatInput.value = "";
+
+  // Get bot reply (API call)
+  const botReply = await sendMessageToAPI(userMessage);
+
+  // Create bot message element
+  const botMessageElement = document.createElement("div");
+  botMessageElement.style.cssText = `
+        max-width: 100%;
+        font-size: 15px;
+        background-color: #f1f0f0;
+        color: #333;
+        padding: 4px 10px;
+        border-radius: 6px;
+        align-self: flex-start;
+        word-wrap: break-word;
+    `;
+
+  // Check if the bot's reply contains code (code block starts with ``` and ends with ``` )
+  if (botReply.includes("```")) {
+    const codeBlock = botReply.match(/```([\s\S]*?)```/)[1]; // Extract code between backticks
+    const preElement = document.createElement("pre");
+    const codeElement = document.createElement("code");
+
+    // Set the code content inside the <code> element
+    codeElement.textContent = codeBlock;
+
+    // Append the code element inside the <pre> tag
+    preElement.appendChild(codeElement);
+
+    // Add some styling for the code block
+    preElement.style.overflowX = "auto"; // Enable horizontal scrolling for long code lines
+    preElement.style.padding = "10px"; // Padding to make it look neat
+    preElement.style.borderRadius = "6px"; // Rounded corners for the code block
+    preElement.style.backgroundColor = "#2E3B4E"; // Dark background with contrast for visibility
+    preElement.style.color = "#f8f8f2"; // Light text color for readability
+    preElement.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)"; // Shadow effect
+    preElement.style.margin = "10px 0"; // Add margin around the code block
+    preElement.style.fontFamily = "'Courier New', monospace"; // Monospace font for code
+
+    // Append the styled code block to the bot message element
+    botMessageElement.appendChild(preElement);
+
+    // Apply syntax highlighting after appending the code block to the DOM
+    highlightAllCodeBlocks();
+  } else {
+    // If no code block, just display the regular bot reply
+    botMessageElement.innerText = botReply;
+  }
+
+  // Append the bot message to the chat
+  chatMessages.appendChild(botMessageElement);
+}
+
+
+const problemDataMap = new Map();
+
+
 const codingDescContainerClass = "coding_nav_bg__HRkIn";
 
 let lastPageVisited = "";
@@ -22,10 +131,35 @@ function isPageChange(){
   return true;
 }
 
+
+//inject.js
+window.addEventListener("xhrDataFetched", (event)=>{
+  const data = event.detail;
+  if(data.url && data.url.match(/https:\/\/api2\.maang\.in\/problems\/user\/\d+/)){
+    const isMatch = data.url.match(/\/(\d+)$/);
+    if(isMatch){
+      const id = isMatch[1];
+      problemDataMap.set(id, data.response);
+      console.log("id...", id);
+      console.log(data.response);
+    }
+  }
+});
+
+// adding inject.js
+function addInjectScript(){
+  const script = document.createElement("script");
+  script.src = chrome.runtime.getURL("inject.js");
+  document.documentElement.insertAdjacentElement("afterbegin",script);
+  script.remove();
+}
+addInjectScript();
+
 function handlePageChange(){
   if(onProblemsPage()){
     cleanUpPage();
-    // add inject script;
+    console.log("hellooo!!");
+    addInjectScript();
     addAIHelpButton();
   }
 }
@@ -44,14 +178,15 @@ function onProblemsPage(){
      return pathname.startsWith("/problems/") && pathname.length > "/problems/".length;
 }
 
+
+
+
  function addAIHelpButton() {
 
-  if(!onProblemsPage() || document.getElementById("ai-help-button")) return ;
+  if(!onProblemsPage() || document.getElementById("ai-help-button")) return;
   const aiHelpButton = document.createElement("button");
   aiHelpButton.innerText = "AI Help";
   aiHelpButton.id = "ai-help-button";
-
-  
 
   aiHelpButton.style.zIndex = "1000";
   aiHelpButton.style.marginLeft = "10px";
@@ -69,7 +204,10 @@ function onProblemsPage(){
   let isChatboxOpen = false;
 
   // Function to handle the opening and closing of the chatbox
-  function handleButtonClick() {
+  function handleChatOpenButtonClick() {
+
+    const problemName = document.getElementsByClassName("problem_heading").innerText;
+    
     const chatPopup = document.getElementById("ai-chat-container");
     
     // If the chatbox is already open, close it
@@ -86,7 +224,7 @@ function onProblemsPage(){
   }
   
   // Event listener for clicking the button to toggle chatbox
-  aiHelpButton.addEventListener("click", handleButtonClick);
+  aiHelpButton.addEventListener("click", handleChatOpenButtonClick);
   
   // Hover effect to change background to white when hovered over
   aiHelpButton.addEventListener("mouseover", function() {
@@ -102,16 +240,13 @@ function onProblemsPage(){
     }
   });
 
-  //#DDF6FF
+
   
 
 
+aiHelpButton.addEventListener("click",   handleButtonClick);
 
-
-
-  aiHelpButton.addEventListener("click",   handleButtonClick);
-
-  let isChatOpen = false;
+let isChatOpen = false;
 let chatPopup = null;
 let chatContent = null;
 
@@ -285,47 +420,48 @@ function closeOnClickOutside(e) {
   }
 }
 
-async function sendMessage() {
-    const chatinput = document.getElementById("ai-chat-input");
-    const chatMessages = document.getElementById("chat-messages");
+// async function sendMessage() {
+//     const chatinput = document.getElementById("ai-chat-input");
+//     const chatMessages = document.getElementById("chat-messages");
 
-    const userMessage = chatinput.value.trim();
-    if(!userMessage) return;
+//     const userMessage = chatinput.value.trim();
+//     if(!userMessage) return;
 
-    const userMessageElement = document.createElement("div");
-    userMessageElement.style.cssText = `
-        max-width: 100%;
-        font-size: 15px;
-        background-color: #DDF6FF;
-        color: black;
-        padding: 4px 10px;
-        border-radius: 6px;
-        align-self: flex-end;
-        word-wrap: break-word;
-    `;
-    userMessageElement.innerText = userMessage;
-    chatMessages.appendChild(userMessageElement);
+//     const userMessageElement = document.createElement("div");
+//     userMessageElement.style.cssText = `
+//         max-width: 100%;
+//         font-size: 15px;
+//         background-color: #DDF6FF;
+//         color: black;
+//         padding: 4px 10px;
+//         border-radius: 6px;
+//         align-self: flex-end;
+//         word-wrap: break-word;
+//     `;
+//     userMessageElement.innerText = userMessage;
+//     chatMessages.appendChild(userMessageElement);
 
-    chatinput.value = "";
+//     chatinput.value = "";
 
-    const botreply = await sendMessageToAPI(userMessage);
+//     const botreply = await sendMessageToAPI(userMessage);
 
-    const botMessageElement = document.createElement("div");
-    botMessageElement.style.cssText = `
-      max-width: 100%;
-      font-size: 15px;
-      background-color: #f1f0f0;
-      color: #333;
-      padding: 4px 10px;
-      border-radius: 6px;
-      align-self: flex-start;
-      word-wrap: break-word;
-    `;
-    
+//     const botMessageElement = document.createElement("div");
+//     botMessageElement.style.cssText = `
+//       max-width: 100%;
+//       font-size: 15px;
+//       background-color: #f1f0f0;
+//       color: #333;
+//       padding: 4px 10px;
+//       border-radius: 6px;
+//       align-self: flex-start;
+//       word-wrap: break-word;
+//     `;
 
-    botMessageElement.innerText = botreply;
-    chatMessages.appendChild(botMessageElement);
-}
+
+//     botMessageElement.innerText = botreply;
+//     chatMessages.appendChild(botMessageElement);
+// }
+
 
 function makeResizable(element) {
   const corners = [
@@ -346,6 +482,7 @@ function makeResizable(element) {
     div.addEventListener("mousedown", startResize);
     element.appendChild(div);
   });
+
 
   function startResize(e) {
     e.preventDefault();
@@ -381,6 +518,9 @@ function makeResizable(element) {
 };
 
 
+
+
+
 async function sendMessageToAPI(userMessage) {
   const apiKey = "AIzaSyBtyfsVefSR-TtRGvPabICw5elXSfFxJBw";
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
@@ -411,7 +551,7 @@ async function sendMessageToAPI(userMessage) {
     // Extract the AI's response message
     if (data.candidates && data.candidates.length > 0) {
       const aiResponse = data.candidates[0].content.parts[0].text;
-      console.log(aiResponse);  
+      // console.log(aiResponse);  
       return aiResponse;
     } else {
       throw new Error("No response from AI");

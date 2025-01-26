@@ -25,7 +25,8 @@
     {
       "resources": [
         "assets/AIhelp.png",
-        "assets/bot.png"
+        "assets/bot.png",
+        "inject.js"
       ],
       "matches" : ["<all_urls>"]
     }
