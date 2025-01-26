@@ -1,5 +1,5 @@
 // const aihelpimgURL = chrome.runtime.getURL("assets/AIhelp.png");
-// hellooo
+// hii
 const codingDescContainerClass = "coding_nav_bg__HRkIn";
 
 let lastPageVisited = "";
@@ -22,10 +22,35 @@ function isPageChange(){
   return true;
 }
 
+
+//inject.js
+window.addEventListener("xhrDataFetched", (event)=>{
+  const data = event.detail;
+  if(data.url && data.url.match(/https:\/\/api2\.maang\.in\/problems\/user\/\d+/)){
+    const isMatch = data.url.match(/\/(\d+)$/);
+    if(isMatch){
+      const id = isMatch[1];
+      problemDataMap.set(id, data.response);
+      console.log("id...", id);
+      console.log(data.response);
+    }
+  }
+});
+
+// adding inject.js
+function addInjectScript(){
+  const script = document.createElement("script");
+  script.src = chrome.runtime.getURL("inject.js");
+  document.documentElement.insertAdjacentElement("afterbegin",script);
+  script.remove();
+}
+addInjectScript();
+
 function handlePageChange(){
   if(onProblemsPage()){
     cleanUpPage();
-    // add inject script;
+    console.log("hellooo!!");
+    addInjectScript();
     addAIHelpButton();
   }
 }
@@ -44,14 +69,15 @@ function onProblemsPage(){
      return pathname.startsWith("/problems/") && pathname.length > "/problems/".length;
 }
 
+
+
+
  function addAIHelpButton() {
 
-  if(!onProblemsPage() || document.getElementById("ai-help-button")) return ;
+  if(!onProblemsPage() || document.getElementById("ai-help-button")) return;
   const aiHelpButton = document.createElement("button");
   aiHelpButton.innerText = "AI Help";
   aiHelpButton.id = "ai-help-button";
-
-  
 
   aiHelpButton.style.zIndex = "1000";
   aiHelpButton.style.marginLeft = "10px";
@@ -69,7 +95,10 @@ function onProblemsPage(){
   let isChatboxOpen = false;
 
   // Function to handle the opening and closing of the chatbox
-  function handleButtonClick() {
+  function handleChatOpenButtonClick() {
+
+    const problemName = document.getElementsByClassName("problem_heading").innerText;
+    
     const chatPopup = document.getElementById("ai-chat-container");
     
     // If the chatbox is already open, close it
@@ -86,7 +115,7 @@ function onProblemsPage(){
   }
   
   // Event listener for clicking the button to toggle chatbox
-  aiHelpButton.addEventListener("click", handleButtonClick);
+  aiHelpButton.addEventListener("click", handleChatOpenButtonClick);
   
   // Hover effect to change background to white when hovered over
   aiHelpButton.addEventListener("mouseover", function() {
@@ -102,16 +131,13 @@ function onProblemsPage(){
     }
   });
 
-  //#DDF6FF
+
   
 
 
+aiHelpButton.addEventListener("click",   handleButtonClick);
 
-
-
-  aiHelpButton.addEventListener("click",   handleButtonClick);
-
-  let isChatOpen = false;
+let isChatOpen = false;
 let chatPopup = null;
 let chatContent = null;
 
@@ -176,7 +202,8 @@ chatPopup.style.transition = "transform 0.3s ease-in-out";
   chatContent.style.backgroundImage = "linear-gradient(45deg, #ffffff 41%, #d1e4f1 100%)";
 
   // Create message input field and send button
-  const messageInput = document.createElement("input");
+const messageInput = document.createElement("input");
+messageInput.id = "ai-chat-input";
 messageInput.type = "text";
 messageInput.placeholder = "Type your message...";
 messageInput.style.padding = "10px 15px";
@@ -292,42 +319,48 @@ function closeOnClickOutside(e) {
   }
 }
 
-function sendMessage() {
-  const messageInput = document.querySelector('input[type="text"]');
-  const message = messageInput.value.trim();
+// async function sendMessage() {
+//     const chatinput = document.getElementById("ai-chat-input");
+//     const chatMessages = document.getElementById("chat-messages");
 
-  if (message) {
-    const senderMessage = document.createElement("div");
-    senderMessage.style.maxWidth = "100%";
-    senderMessage.style.fontSize = "15px";
-    senderMessage.style.backgroundColor = "#DDF6FF";
-    senderMessage.style.color = "black";
-    senderMessage.style.padding = "4px 10px";
-    senderMessage.style.borderRadius = "6px";
-    senderMessage.style.alignSelf = "flex-end";
-    senderMessage.style.wordWrap = "break-word";
-    senderMessage.innerText = message;
-    chatContent.appendChild(senderMessage);
+//     const userMessage = chatinput.value.trim();
+//     if(!userMessage) return;
 
-    const receiverMessage = document.createElement("div");
-    receiverMessage.style.maxWidth = "100%";
-    receiverMessage.style.fontSize = "15px";
-    receiverMessage.style.backgroundColor = "#f1f0f0";
-    receiverMessage.style.color = "#333";
-    receiverMessage.style.padding = "4px 10px";
-    receiverMessage.style.borderRadius = "6px";
-    receiverMessage.style.alignSelf = "flex-start";
-    receiverMessage.style.wordWrap = "break-word";
-    receiverMessage.innerText = "Thanks for your message!";
-    setTimeout(() => {
-      chatContent.appendChild(receiverMessage);
-      chatContent.scrollTop = chatContent.scrollHeight;
-    }, 1000);
+//     const userMessageElement = document.createElement("div");
+//     userMessageElement.style.cssText = `
+//         max-width: 100%;
+//         font-size: 15px;
+//         background-color: #DDF6FF;
+//         color: black;
+//         padding: 4px 10px;
+//         border-radius: 6px;
+//         align-self: flex-end;
+//         word-wrap: break-word;
+//     `;
+//     userMessageElement.innerText = userMessage;
+//     chatMessages.appendChild(userMessageElement);
 
-    messageInput.value = "";
-    chatContent.scrollTop = chatContent.scrollHeight;
-  }
-}
+//     chatinput.value = "";
+
+//     const botreply = await sendMessageToAPI(userMessage);
+
+//     const botMessageElement = document.createElement("div");
+//     botMessageElement.style.cssText = `
+//       max-width: 100%;
+//       font-size: 15px;
+//       background-color: #f1f0f0;
+//       color: #333;
+//       padding: 4px 10px;
+//       border-radius: 6px;
+//       align-self: flex-start;
+//       word-wrap: break-word;
+//     `;
+
+
+//     botMessageElement.innerText = botreply;
+//     chatMessages.appendChild(botMessageElement);
+// }
+
 
 function makeResizable(element) {
   const corners = [
@@ -348,6 +381,7 @@ function makeResizable(element) {
     div.addEventListener("mousedown", startResize);
     element.appendChild(div);
   });
+
 
   function startResize(e) {
     e.preventDefault();
@@ -378,7 +412,53 @@ function makeResizable(element) {
   }
 }
 
-
   const codingDescContainer = document.getElementsByClassName(codingDescContainerClass)[0];
   codingDescContainer.insertAdjacentElement("beforeend", aiHelpButton);
 };
+
+
+
+
+
+async function sendMessageToAPI(userMessage) {
+  const apiKey = "AIzaSyBtyfsVefSR-TtRGvPabICw5elXSfFxJBw";
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
+  const requestData = {
+    contents: [
+      {
+        parts: [
+          { text: userMessage }
+        ]
+      }
+    ]
+  };
+
+  try {
+    // Make the API call
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    // Parse the JSON response
+    const data = await response.json();
+
+    // Extract the AI's response message
+    if (data.candidates && data.candidates.length > 0) {
+      const aiResponse = data.candidates[0].content.parts[0].text;
+      // console.log(aiResponse);  
+      return aiResponse;
+    } else {
+      throw new Error("No response from AI");
+    }
+  } catch (error) {
+    console.error("Error calling AI API:", error);
+    return "An error occurred while communicating with the AI.";
+  }
+}
+
+
